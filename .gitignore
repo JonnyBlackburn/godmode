@@ -2,6 +2,8 @@
 bin/
 bin-debug/
 bin-release/
+/idea
+*.db
 
 # Other files and folders
 .settings/
