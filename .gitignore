@@ -3,6 +3,7 @@ bin/
 bin-debug/
 bin-release/
 /.idea
+/out
 *.db
 *.iml
 
