@@ -1,236 +1,109 @@
 package
 {
-	import com.adobe.nativeExtensions.Vibration;
-	import flash.display.Bitmap;
+	import buttons.Button1;
+
+	import flash.desktop.NativeApplication;
+	import flash.desktop.SystemIdleMode;
 	import flash.display.Sprite;
-	import flash.display.StageAlign;
-	import flash.display.StageScaleMode;
-	import flash.events.MouseEvent;
-	import flash.events.TouchEvent;
-	import flash.geom.ColorTransform;
+	import flash.display3D.Context3DProfile;
+	import flash.events.Event;
+	import flash.filesystem.File;
+	import flash.geom.Rectangle;
+
+	import starling.core.Starling;
+	import starling.display.Image;
+	import starling.utils.AssetManager;
 
 	public class Main extends Sprite
 	{
-		private var backgroundWidth:int = 540;
-		private var backgroundHeight:int = 960;
-		private var fullscreenWidth:Number;
-		private var fullscreenHeight:Number;
+		private var assetManager:AssetManager;
 
-		private var offPos:Number;
-		private var onPos:Number;
-		private var edgeBuffer:Number = 10;
-		private var vibe:Vibration;
-
-		private var sliding:Boolean = false;
-		private var dragged:Boolean = false;
-		private var godModeActive:Boolean = false;
-
-		private var slideBtn:Sprite;
-		private var offText:Bitmap;
-		private var onText:Bitmap;
-		private var light:Bitmap;
-		private var lightOnColour:ColorTransform;
-		private var lightOffColour:ColorTransform;
-
-		[Embed(source="/../assets/background.jpg")]
-		public static const background:Class;
-
-		[Embed(source="/../assets/buttonBg.png")]
-		public static const buttonBackground:Class;
-
-		[Embed(source="/../assets/slideBtn.png")]
-		public static const slideButton:Class;
-
-		[Embed(source="/../assets/buttonLight.png")]
-		public static const buttonLight:Class;
-
-		[Embed(source="/../assets/offTxt.png")]
-		public static const offTxt:Class;
-
-		[Embed(source="/../assets/onTxt.png")]
-		public static const onTxt:Class;
+		private var scene:Starling;
+		private var game:StateManager;
 
 	    public function Main()
 	    {
-		    stage.scaleMode = StageScaleMode.NO_SCALE;
-		    stage.align = StageAlign.TOP_LEFT;
-		    stage.color = 0x1e1e1e;
+		    var viewport:Rectangle;
 
-		    fullscreenWidth = stage.fullScreenWidth;
-		    fullscreenHeight = stage.fullScreenHeight;
+		    if(CONFIG::mobile)
+		    {
+		        viewport = new Rectangle(0, 0, stage.fullScreenWidth, stage.fullScreenHeight);
+		    }
+		    else
+		    {
+			    viewport = new Rectangle(0, 0, Assets.GAME_WIDTH, Assets.GAME_HEIGHT);
 
-		    if(Vibration.isSupported) vibe = new Vibration();
+			    stage.nativeWindow.width = Assets.GAME_WIDTH;
+			    stage.nativeWindow.height = Assets.GAME_HEIGHT;
 
-		    var scaleWidthRatio:Number = fullscreenWidth / backgroundWidth;
-		    var scaleHeightRatio:Number = fullscreenHeight / backgroundHeight;
+			    //Native window doesn't take into account the chrome size,
+			    //so we need to add it on to see the whole stage
+			    stage.nativeWindow.height += stage.nativeWindow.height - stage.stageHeight;
+			    stage.nativeWindow.width += stage.nativeWindow.width - stage.stageWidth;
+		    }
 
-		    lightOffColour = new ColorTransform(0.6, 0, 0);
-		    lightOnColour = new ColorTransform(0.03, 0.6, 0);
+		    scene = new Starling(
+			    StarlingRoot,
+			    stage,
+			    viewport,
+			    null,
+			    "auto",
+			    [Context3DProfile.BASELINE_EXTENDED, Context3DProfile.BASELINE, Context3DProfile.BASELINE_CONSTRAINED]
+		    );
 
-		    var bg:Bitmap = new background;
-		    addChild(bg);
-		    if (scaleWidthRatio > 1) bg.scaleX = scaleWidthRatio;
-		    if (scaleHeightRatio > 1) bg.scaleY = scaleHeightRatio;
+		    scene.stage.stageWidth = Assets.GAME_WIDTH;
+		    scene.stage.stageHeight = Assets.GAME_HEIGHT;
 
-		    var buttonSprite:Sprite = new Sprite();
+		    scene.stage.color = 0x1e1e1e;
 
-		    var buttonBG:Bitmap = new buttonBackground;
-		    buttonBG.x -= buttonBG.width / 2;
-		    buttonBG.y -= buttonBG.height / 2;
-		    buttonSprite.addChild(buttonBG);
+		    scene.supportHighResolutions = true;
+		    scene.stage3D.addEventListener(Event.CONTEXT3D_CREATE, context3DCreateHandler);
 
-		    offText = new offTxt;
-		    offText.x -= (offText.width / 2) - 25;
-		    offText.y -= offText.height / 2;
-		    offText.visible = false;
-		    buttonSprite.addChild(offText);
-
-		    onText = new onTxt;
-		    onText.x -= (onText.width / 2) + 25;
-		    onText.y -= onText.height / 2;
-		    onText.visible = false;
-		    buttonSprite.addChild(onText);
-
-		    buttonSprite.x = fullscreenWidth / 2;
-		    buttonSprite.y = fullscreenHeight / 2;
-		    buttonSprite.scaleX = buttonSprite.scaleY = scaleWidthRatio;
-		    addChild(buttonSprite);
-
-		    var slideBtnBitmap:Bitmap = new slideButton;
-		    slideBtnBitmap.x -= slideBtnBitmap.width / 2;
-		    slideBtnBitmap.y -= (slideBtnBitmap.height / 2) - 4;
-
-		    light = new buttonLight;
-		    light.x -= (light.width / 2) + 4;
-		    light.y -= light.height / 2;
-
-		    slideBtn = new Sprite();
-		    slideBtn.addChild(slideBtnBitmap);
-		    slideBtn.addChild(light);
-
-		    slideBtn.scaleX = slideBtn.scaleY = scaleWidthRatio;
-
-		    slideBtn.x = fullscreenWidth / 2;
-		    slideBtn.y = fullscreenHeight / 2;
-
-		    slideBtn.addEventListener(TouchEvent.TOUCH_TAP, onTouchTap);
-		    slideBtn.addEventListener(MouseEvent.CLICK, onMouseClick);
-		    slideBtn.addEventListener(TouchEvent.TOUCH_BEGIN, onTouchBegin);
-		    slideBtn.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
-		    slideBtn.addEventListener(TouchEvent.TOUCH_MOVE, onTouchMove);
-		    slideBtn.addEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
-		    slideBtn.addEventListener(TouchEvent.TOUCH_END, onTouchEnd);
-		    slideBtn.addEventListener(MouseEvent.MOUSE_UP, onMouseUp);
-		    slideBtn.addEventListener(TouchEvent.TOUCH_OUT, onTouchEnd);
-		    slideBtn.addEventListener(MouseEvent.MOUSE_OUT, onMouseUp);
-
-		    addChild(slideBtn);
-
-		    offPos = (buttonSprite.x - (buttonSprite.width / 2)) + (slideBtn.width / 2) + edgeBuffer;
-		    onPos = (buttonSprite.x + (buttonSprite.width / 2)) - (slideBtn.width / 2);
-
-		    setGodMode(false);
+		    NativeApplication.nativeApplication.addEventListener(Event.ACTIVATE, onAppActivated);
+		    NativeApplication.nativeApplication.addEventListener(Event.DEACTIVATE, onAppDeactivated);
 	    }
 
-		private function setGodMode(value:Boolean, snapBtn:Boolean = true):void
+		private function onAppActivated(e:Event):void
 		{
-			godModeActive = value;
-
-			if(godModeActive)
-			{
-				if(snapBtn)
-				{
-					slideBtn.x = onPos;
-					if(vibe != null) vibe.vibrate(200);
-				}
-				light.transform.colorTransform = lightOnColour;
-				offText.visible = false;
-				onText.visible = true;
-
-			}
-			else
-			{
-				if(snapBtn) slideBtn.x = offPos;
-				light.transform.colorTransform = lightOffColour;
-				offText.visible = true;
-				onText.visible = false;
-			}
-
+			NativeApplication.nativeApplication.systemIdleMode = SystemIdleMode.KEEP_AWAKE;
+			scene.start();
 		}
 
-		private function btnCloserToOffPos():Boolean
+		private function onAppDeactivated(e:Event):void
 		{
-			return Math.abs(slideBtn.x - offPos) < Math.abs(slideBtn.x - onPos);
+			NativeApplication.nativeApplication.systemIdleMode = SystemIdleMode.NORMAL;
+			scene.stop();
 		}
 
-		private function onTouchTap(e:TouchEvent):void
+		private function context3DCreateHandler(event:Event = null):void
 		{
-			if(!dragged) setGodMode(!godModeActive);
+			scene.stage3D.removeEventListener(Event.CONTEXT3D_CREATE, context3DCreateHandler);
 
-			dragged = false;
+			NativeApplication.nativeApplication.systemIdleMode = SystemIdleMode.KEEP_AWAKE;
+			scene.start();
+
+			game = new StateManager();
+			scene.stage.addChild(game.view);
+
+			var appDir:File = File.applicationDirectory;
+
+			assetManager = Assets.getAssetManagerInstance();
+			assetManager.enqueue(appDir.resolvePath(Assets.ASSET_DIR + Assets.BG + ".jpg"));
+			assetManager.loadQueue(onProgress);
 		}
 
-		private function onMouseClick(e:MouseEvent):void
+		private function onProgress(ratio:Number):void
 		{
-			if(!dragged) setGodMode(!godModeActive);
-
-			dragged = false;
+			if(ratio == 1) assetsLoaded();
 		}
 
-		private function onTouchBegin(e:TouchEvent):void
+		private function assetsLoaded():void
 		{
-			sliding = true;
+			var bg:Image = new Image(assetManager.getTexture(Assets.BG));
+			game.view.addChild(bg);
+			game.currentState = new Button1();
 		}
 
-		private function onMouseDown(e:MouseEvent):void
-		{
-			sliding = true;
-		}
-
-		private function onTouchMove(e:TouchEvent):void
-		{
-			if(sliding)
-			{
-				dragged = true;
-				if(e.stageX > offPos && e.stageX < onPos)
-				{
-					slideBtn.x = e.stageX;
-					setGodMode(!btnCloserToOffPos(), false);
-				}
-			}
-		}
-
-		private function onMouseMove(e:MouseEvent):void
-		{
-			if(sliding)
-			{
-				dragged = true;
-				if(e.stageX > offPos && e.stageX < onPos)
-				{
-					slideBtn.x = e.stageX;
-					setGodMode(!btnCloserToOffPos(), false);
-				}
-			}
-		}
-
-		private function onTouchEnd(e:TouchEvent):void
-		{
-			sliding = false;
-		}
-
-		private function onMouseUp(e:MouseEvent):void
-		{
-			sliding = false;
-			if(btnCloserToOffPos())
-			{
-				slideBtn.x = offPos;
-				setGodMode(false);
-			}
-			else
-			{
-				slideBtn.x = onPos;
-				setGodMode(true);
-			}
-		}
 	}
+
 }

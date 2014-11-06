@@ -69,7 +69,7 @@
         <!--<maximizable></maximizable>-->
 
         <!-- Whether the user can resize the window. Optional. Default true. -->
-        <!--<resizable></resizable>-->
+        <resizable>false</resizable>
 
         <!-- The window's initial width in pixels. Optional. -->
         <!--<width></width>-->
@@ -93,13 +93,13 @@
         <aspectRatio>portrait</aspectRatio>
 
         <!-- Whether the app will begin auto-orienting on launch. Optional. Mobile only. Default false -->
-        <autoOrients>true</autoOrients>
+        <autoOrients>false</autoOrients>
 
         <!-- Whether the app launches in full screen. Optional. Mobile only. Default false -->
         <fullScreen>true</fullScreen>
 
         <!-- The render mode for the app (either auto, cpu, gpu, or direct). Optional. Default auto -->
-        <!--<renderMode></renderMode>-->
+        <renderMode>direct</renderMode>
 
         <!-- Whether the default direct mode rendering context allocates storage for depth and stencil buffers.  Optional.  Default false. -->
         <!--<depthAndStencil></depthAndStencil>-->
@@ -108,7 +108,7 @@
         <!--<softKeyboardBehavior></softKeyboardBehavior>-->
 
         <!-- Display Resolution for the app (either "standard" or "high"). Optional, OSX-only. Default "standard" -->
-        <!-- <requestedDisplayResolution></requestedDisplayResolution> -->
+        <requestedDisplayResolution>high</requestedDisplayResolution>
     </initialWindow>
 
     <!-- We recommend omitting the supportedProfiles element, which in turn permits your application to be deployed to all devices supported by AIR.
