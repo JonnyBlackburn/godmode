@@ -21,7 +21,6 @@ package buttons
 		private static const lightOnColour:uint = 0x08AA00;
 
 		private var assetManager:AssetManager;
-		private var inputState:InputState;
 		private var vibe:Vibration;
 
 		private var buttonSprite:Sprite;
@@ -35,6 +34,7 @@ package buttons
 		private var onPosition:Number;
 		private var buttonActive:Boolean = false;
 		private var previousState:Boolean;
+		private var currentState:Boolean;
 		private var sliding:Boolean = false;
 
 		private var offPosTween:Tween;
@@ -45,7 +45,6 @@ package buttons
 			super();
 
 			assetManager = Assets.getAssetManagerInstance();
-			inputState = InputState.getInstance();
 			if(CONFIG::mobile) vibe = Vibrator.getInstance();
 
 			var appDir:File = File.applicationDirectory;
@@ -115,29 +114,15 @@ package buttons
 
 		private function setButtonActive(value:Boolean):void
 		{
-			if(value)
-			{
-				previousState = buttonActive;
-				buttonActive = value;
-				vibrateCheck();
-				buttonLight.color = lightOnColour;
-				offText.visible = false;
-				onText.visible = true;
-			}
-			else
-			{
-				previousState = buttonActive;
-				buttonActive = value;
-				vibrateCheck();
-				buttonLight.color = lightOffColour;
-				offText.visible = true;
-				onText.visible = false;
-			}
+			buttonActive = value;
+			buttonLight.color = value ? lightOnColour : lightOffColour;
+			offText.visible = !value;
+			onText.visible = value;
 		}
 
 		private function vibrateCheck():void
 		{
-			if(vibe != null && previousState != buttonActive) vibe.vibrate(200);
+			if(vibe != null && previousState != currentState) vibe.vibrate(200);
 		}
 
 		private function btnCloserToOffPos():Boolean
@@ -148,28 +133,13 @@ package buttons
 		private function onTouch(e:TouchEvent):void
 		{
 			var startTouches:Vector.<Touch> = e.getTouches(view, TouchPhase.BEGAN);
-			if (startTouches.length > 0)
-			{
-				inputState.mouseWasPressed = false;
-				inputState.mousePressed = true;
-				onTouchBegin();
-			}
+			if (startTouches.length > 0) onTouchBegin();
 
 			var moveTouches:Vector.<Touch> = e.getTouches(view, TouchPhase.MOVED);
-			if (moveTouches.length > 0)
-			{
-				inputState.mouseWasPressed = true;
-				inputState.mousePressed = true;
-				onTouchMove(moveTouches[0]);
-			}
+			if (moveTouches.length > 0) onTouchMove(moveTouches[0]);
 
 			var endTouches:Vector.<Touch> = e.getTouches(slider, TouchPhase.ENDED);
-			if(endTouches.length > 0)
-			{
-				inputState.mouseWasPressed = true;
-				inputState.mousePressed = false;
-				onTouchEnd(endTouches[0]);
-			}
+			if(endTouches.length > 0) onTouchEnd();
 		}
 
 		private function onTouchBegin():void
@@ -189,23 +159,31 @@ package buttons
 			}
 		}
 
-		private function onTouchEnd(touch:Touch):void
+		private function onTouchEnd():void
 		{
 			sliding = false;
 			if(btnCloserToOffPos())
 			{
 				offPosTween = new Tween(slider, 0.1);
 				offPosTween.moveTo(offPosition, slider.y);
+				offPosTween.onComplete = function():void { setCurrentState(false) };
 				Starling.juggler.add(offPosTween);
-				setButtonActive(false);
 			}
 			else
 			{
 				onPosTween = new Tween(slider, 0.1);
 				onPosTween.moveTo(onPosition, slider.y);
+				onPosTween.onComplete = function():void { setCurrentState(true) };
 				Starling.juggler.add(onPosTween);
-				setButtonActive(true);
 			}
+		}
+
+		private function setCurrentState(value:Boolean):void
+		{
+			previousState = currentState;
+			currentState = value;
+			vibrateCheck();
+			setButtonActive(currentState);
 		}
 	}
 }

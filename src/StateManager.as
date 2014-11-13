@@ -5,7 +5,6 @@ package
 
 	import starling.display.Sprite;
 	import starling.events.EnterFrameEvent;
-	import starling.events.TouchEvent;
 
 	public class StateManager
 	{
