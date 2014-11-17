@@ -227,6 +227,7 @@
             <![CDATA[
             <manifest android:installLocation="auto">
                 <uses-permission android:name="android.permission.VIBRATE"/>
+                <activity android:name="com.freshplanet.inapppurchase.activities.BillingActivity" android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen"></activity>
             </manifest>
             ]]>
             </manifestAdditions>

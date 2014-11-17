@@ -1,12 +1,11 @@
 package buttons
 {
 	import com.adobe.nativeExtensions.Vibration;
+	import com.freshplanet.ane.AirInAppPurchase.InAppPurchase;
 
 	import flash.filesystem.File;
-	import flash.geom.Rectangle;
 
 	import starling.display.Image;
-
 	import starling.display.Sprite;
 	import starling.events.Touch;
 	import starling.events.TouchEvent;
@@ -24,6 +23,7 @@ package buttons
 		private static const TEXT_OFFSET_Y:int = 4;
 
 		private var assetManager:AssetManager;
+		private var inAppPurchase:InAppPurchase;
 		private var vibe:Vibration;
 
 		private var buttonSprite:Sprite;
@@ -37,11 +37,15 @@ package buttons
 		public function NoClip()
 		{
 			assetManager = Assets.getAssetManagerInstance();
+			inAppPurchase = InAppPurchase.getInstance();
 			if(CONFIG::mobile) vibe = Vibrator.getInstance();
 
 			var appDir:File = File.applicationDirectory;
 			assetManager.enqueue(appDir.resolvePath(Assets.ASSET_DIR + "noClip/"));
 			assetManager.loadQueue(onProgress);
+
+			//Need a google play key!
+			inAppPurchase.init();
 		}
 
 		private function onProgress(ratio:Number):void
@@ -106,7 +110,15 @@ package buttons
 
 			if(currentState)
 			{
-				buttonLight.color = NO_CLIP_ON;
+				if(inAppPurchase.isInAppPurchaseSupported)
+				{
+
+				}
+				else
+				{
+					//In App purchase not supported, need to show a message or should I let them do it for free?
+					buttonLight.color = NO_CLIP_ON;
+				}
 			}
 			else
 			{
