@@ -23,6 +23,7 @@ package buttons
 		private var assetManager:AssetManager;
 		private var vibe:Vibration;
 
+		private var noClip:NoClip;
 		private var buttonSprite:Sprite;
 		private var buttonBg:Image;
 		private var offText:Image;
@@ -50,7 +51,7 @@ package buttons
 			var appDir:File = File.applicationDirectory;
 			assetManager.enqueue(appDir.resolvePath(Assets.ASSET_DIR + "button1/"));
 			assetManager.loadQueue(onProgress);
-		}
+	}
 
 		private function onProgress(ratio:Number):void
 		{
@@ -110,6 +111,11 @@ package buttons
 			setButtonActive(false);
 
 			slider.addEventListener(TouchEvent.TOUCH, onTouch);
+
+			noClip = new NoClip();
+			noClip.x = Assets.GAME_WIDTH / 2;
+			noClip.y = Assets.GAME_HEIGHT - 50;
+			view.addChild(noClip);
 		}
 
 		private function setButtonActive(value:Boolean):void
@@ -132,10 +138,10 @@ package buttons
 
 		private function onTouch(e:TouchEvent):void
 		{
-			var startTouches:Vector.<Touch> = e.getTouches(view, TouchPhase.BEGAN);
+			var startTouches:Vector.<Touch> = e.getTouches(slider, TouchPhase.BEGAN);
 			if (startTouches.length > 0) onTouchBegin();
 
-			var moveTouches:Vector.<Touch> = e.getTouches(view, TouchPhase.MOVED);
+			var moveTouches:Vector.<Touch> = e.getTouches(slider, TouchPhase.MOVED);
 			if (moveTouches.length > 0) onTouchMove(moveTouches[0]);
 
 			var endTouches:Vector.<Touch> = e.getTouches(slider, TouchPhase.ENDED);

@@ -12,6 +12,8 @@ package
 
 	import starling.core.Starling;
 	import starling.display.Image;
+	import starling.display.Image;
+	import starling.textures.Texture;
 	import starling.utils.AssetManager;
 
 	public class Main extends Sprite
@@ -88,7 +90,7 @@ package
 			var appDir:File = File.applicationDirectory;
 
 			assetManager = Assets.getAssetManagerInstance();
-			assetManager.enqueue(appDir.resolvePath(Assets.ASSET_DIR + Assets.BG + ".jpg"));
+			assetManager.enqueue(Assets.BG);
 			assetManager.loadQueue(onProgress);
 		}
 
@@ -99,7 +101,7 @@ package
 
 		private function assetsLoaded():void
 		{
-			var bg:Image = new Image(assetManager.getTexture(Assets.BG));
+			var bg:Image = Image.fromBitmap(new Assets.BG());
 			game.view.addChild(bg);
 			game.currentState = new Button1();
 		}
